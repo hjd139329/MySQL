@@ -195,3 +195,64 @@ select * from emp where (salary,job) in (select emp.salary,emp.job from emp wher
 #查询入职日期是‘2006-01-01’之后的员工信息，及其部门信息
 select * from emp where entrydate >'2006-01-01';
 select e.*,d.* from (select * from emp where entrydate >'2006-01-01') e left join dept d on e.dept_id = d.id;
+
+
+
+
+-- ---------------------------------------> 多表查询案例 <----------------------------------
+create table salgrade(
+    grade int,
+    losal int,
+    hisal int
+) comment '薪资等级表';
+
+insert into salgrade values (1,0,3000);
+insert into salgrade values (2,3001,5000);
+insert into salgrade values (3,5001,8000);
+insert into salgrade values (4,8001,10000);
+insert into salgrade values (5,10001,15000);
+insert into salgrade values (6,15001,20000);
+insert into salgrade values (7,20001,25000);
+insert into salgrade values (8,25001,30000);
+
+
+
+#查询员工姓名、年龄、职位、部门信息---隐式内连接
+select e.name,e.age,e.job,d.name from emp e, dept d where e.dept_id = d.id;
+#查询年龄小于30的员工姓名、年龄、职位、部门信息----显式内连接
+select e.name,e.age,e.job,d.name from emp e inner join dept d on e.dept_id = d.id where e.age<30;
+#查询拥有员工的部门ID、名称
+select distinct d.id,d.name from emp e ,dept d where e.dept_id = d.id;
+#查询所有年龄大于40的员工，及其归属部门，员工没有部门也要展示出来
+select e.name,d.name from emp e left join dept d on e.dept_id = d.id where e.age>40;
+#查询所有员工的工资等级
+select e.*,s.grade,s.losal,s.hisal from emp e,salgrade s where e.salary>=s.losal&&e.salary<=s.hisal;
+select e.*,s.grade,s.losal,s.hisal from emp e,salgrade s where e.salary between s.losal and s.hisal;
+#查询研发部所有员工信息及工资等级
+select id from dept where name = '研发部';
+
+select e.*, s.grade
+from emp e,
+     salgrade s
+where dept_id = (select id from dept where name = '研发部') && e.salary between s.losal and s.hisal;
+
+#查询研发部员工的平均薪资
+select avg(e.salary) from emp e,dept d where e.dept_id = d.id and d.name = '研发部';
+#查询工工资比灭绝高的员工信息
+select emp.salary from emp where name = '灭绝';
+select * from emp e where salary > (select emp.salary from emp where name = '灭绝');
+#查询比平均薪资高的员工共信息
+select avg(salary) from emp e ;
+select * from emp e where salary > (select avg(salary) from emp e );
+#查询工资低于本部门平均工资的员工信息
+select avg(salary) from emp e1 where dept_id = 1;
+select avg(salary) from emp e1 where dept_id = 2;
+
+select * ,(select avg(salary) from emp e1 where e1.dept_id = e2.dept_id ) '平均 'from emp e2 where e2.salary <(select avg(salary) from emp e1 where e1.dept_id = e2.dept_id );
+#查询所有部门薪资，并统计部门员工人数
+select count(*) from emp e where dept_id = 1;
+select d.* ,(select count(*) from emp e where e.dept_id = d.id) '人数' from dept d;
+
+#查询所有学生的选课情况，展示出学生名称、学号、课程名称
+select s.name,s.no,c.name from student s,student_course sc ,course c where s.id = sc.studentid and sc.courseid = c.id;
+
